@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<head>
+  <title>Login Form</title>
+</head>
+<body>
+  <section>
+    <div>
+      <h1>Signup</h1>
+      <div>
+        <p><input type="text" id="login1" value="" placeholder="Username"></p>
+        <p><input type="password" id="password1" value="" placeholder="Password"></p>
+        <p><input type="email" name="email" id="email" value="" placeholder="email"></p>
+        <p ><input type="submit" id="signup"></p>
+      </div>
+    </div>
+  </section>
+    <section>
+    <div>
+      <h1>Login</h1>
+      <div>
+        <p><input type="text" name="login" id="login" value="" placeholder="Username"></p>
+        <p><input type="password" name="password" id="password" value="" placeholder="Password"></p>
+        <p><input type="submit" id="submit"></p>
+      </div>
+    </div>
+  </section>
+</body>
+<script>
+    var signup = document.getElementById('signup');
+    signup.addEventListener("click",function(event){
+    var id1 = document.getElementById('login1');
+    var password1 = document.getElementById('password1');
+    var email = document.getElementById('email');
+    var data1 = {
+        "id":id1.value,
+        "password":password1.value,
+        "email":email.value
+    };
+    var xhrObj1 = new XMLHttpRequest(); 
+    xhrObj1.open("POST", "http://127.0.0.1:8080/signup", true); 
+    xhrObj1.withCredentials = true;
+    xhrObj1.setRequestHeader("Content-type","application/json");
+    console.log(JSON.stringify(data1));
+    xhrObj1.send(JSON.stringify(data1));
+  });
+
+
+  var submit = document.getElementById('submit');
+  submit.addEventListener("click",function(event){
+    var id = document.getElementById('login');
+    var password = document.getElementById('password');
+    var data = {
+        "id":id.value,
+        "password":password.value
+    };
+    var xhrObj = new XMLHttpRequest(); 
+    xhrObj.open("POST", "http://127.0.0.1:8080/login", true); 
+    xhrObj.withCredentials = true;
+    xhrObj.setRequestHeader("Content-type","application/json");
+    console.log(JSON.stringify(data));
+    xhrObj.send(JSON.stringify(data));
+  });
+</script>
+</html>
