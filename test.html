@@ -24,6 +24,26 @@
       </div>
     </div>
   </section>
+    <section>
+    <div>
+      <h1>Profile</h1>
+      <div>
+        <p><input type="text" name="name" id="name" value="" placeholder="name"></p>
+        <p><input type="text" name="age" id="age" value="" placeholder="age"></p>
+        <p><input type="text" name="phone" id="phone" value="" placeholder="phone"></p>
+        <p><input type="submit" id="save"></p>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div>
+      <h1>Avatar</h1>
+      <div>
+        <p><input type="file" name="avatar" id="avatar"></p>
+        <img src="" alt="Smiley face" id="image">
+      </div>
+    </div>
+  </section>
 </body>
 <script>
     var signup = document.getElementById('signup');
@@ -37,7 +57,7 @@
         "email":email.value
     };
     var xhrObj1 = new XMLHttpRequest(); 
-    xhrObj1.open("POST", "http://127.0.0.1:8080/signup", true); 
+    xhrObj1.open("POST", "/signup", true); 
     xhrObj1.withCredentials = true;
     xhrObj1.setRequestHeader("Content-type","application/json");
     console.log(JSON.stringify(data1));
@@ -54,11 +74,45 @@
         "password":password.value
     };
     var xhrObj = new XMLHttpRequest(); 
-    xhrObj.open("POST", "http://127.0.0.1:8080/login", true); 
+    xhrObj.open("POST", "/login", true); 
     xhrObj.withCredentials = true;
     xhrObj.setRequestHeader("Content-type","application/json");
     console.log(JSON.stringify(data));
     xhrObj.send(JSON.stringify(data));
   });
+      var save = document.getElementById('save');
+    save.addEventListener("click",function(event){
+      var name = document.getElementById('name');
+      var age = document.getElementById('age');
+      var phone = document.getElementById('phone');
+      var profile = {
+        "name":name.value,
+        "age":age.value,
+        "phone": phone.value
+      };
+    var xhrObj2 = new XMLHttpRequest(); 
+    xhrObj2.open("POST", "/profile", true); 
+    xhrObj2.withCredentials = true;
+    xhrObj2.setRequestHeader("Content-type","application/json");
+    console.log(JSON.stringify(profile));
+    xhrObj2.send(JSON.stringify(profile));
+  });
+   var avatar =document.getElementById('avatar');
+    avatar.addEventListener("change",function(event){
+        var file = event.target.files || event.dataTransfer.files;
+        var formData = new FormData();
+        formData.append("content",file[0]);
+        var xhrObj = new XMLHttpRequest(); 
+        xhrObj.open("POST", "/avatar", true); 
+        xhrObj.withCredentials = true;
+        xhrObj.send(formData);
+        xhrObj.onreadystatechange=function()
+        {
+          if (xhrObj.readyState==4 && xhrObj.status==200)
+            {
+            document.getElementById("image").src=xhrObj.responseText;
+            }
+           }
+    });
 </script>
 </html>
