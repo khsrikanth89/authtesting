@@ -11,6 +11,8 @@ import (
     "appengine/urlfetch"
     "net/url"
     "time"
+    "appengine/blobstore"
+    "appengine/image"
     cloudstore "google.golang.org/cloud/storage"
 )
 func init(){
@@ -27,12 +29,17 @@ type Data struct{
     Email string
 }
 
+type Avatar struct{
+    Url string
+    Thumbnail string
+}   
+
 type Profile struct{
     Id string
     Name string
     Age string
     Phone string
-    Avatar string 
+    Avatars []Avatar 
 }
 
 
@@ -220,12 +227,21 @@ func profile(response http.ResponseWriter, request *http.Request){
                     http.Error(response, err.Error(), http.StatusInternalServerError)
                     return
                 }
-          }       
+          }else if request.Method == "GET"{
+                response.Header().Set("Access-Control-Allow-Credentials","true")
+                qr := make([]Profile, 0, 100)
+                session, _ := request.Cookie("session")
+                q := datastore.NewQuery("Profile").Filter("Id =", session.Value)
+                _,_ = q.GetAll(context, &qr)
+                response.Write([]byte(fmt.Sprintf("%+v",qr[0])))
+                return
+            }      
 }
 
 func avatar(response http.ResponseWriter, request *http.Request){
     context := appengine.NewContext(request)
     queryResult := make([]Data, 0, 100)
+    _,fileHead,_ := request.FormFile("content")
     // data := make(map[string]string)
     if request.Method == "OPTIONS" {
         response.Header().Set("Access-Control-Allow-Methods","GET, HEAD, PUT, DELETE, POST")
@@ -252,7 +268,33 @@ func avatar(response http.ResponseWriter, request *http.Request){
             return
         }
         avatar,_ := sendData(session.Value, request)
+        thumbnail,_ := makeAvatar(context, "/gs/test-auth-service/"+session.Value+"/"+fileHead.Filename)
+        qresult := make([]Profile,0,100)
         context.Infof(fmt.Sprintf("%+v",avatar))
+        q = datastore.NewQuery("Profile").Filter("Id =", session.Value)
+        key,_ := q.GetAll(context, &qresult)
+        context.Infof(fmt.Sprintf("%+v",qresult))
+            ava := Avatar{
+                Url:avatar,
+                Thumbnail:thumbnail,
+            }
+            var temp []Avatar
+            temp = append(temp,ava)
+        if len(qresult)==0{
+            prof := Profile{
+                Id: session.Value,
+                Avatars:temp,
+            }
+         _, err = datastore.Put(context, datastore.NewKey(context, "Profile", "", 0, nil), &prof)
+        }else{
+             qresult[0].Avatars = append(qresult[0].Avatars,ava)
+             _, err = datastore.Put(context, key[0], &qresult[0])
+        }
+        if err != nil {
+            http.Error(response, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        context.Infof(fmt.Sprintf("%+v",qresult[0]))
         response.Write([]byte(avatar))
     }
 }
@@ -291,4 +333,12 @@ func sendData(user string, r *http.Request) (string, error) {
         avatar, _ := url.Parse("http://storage.googleapis.com/test-auth-service/"+user+"/"+fileHeader.Filename)
         return avatar.String(), nil
     }
+}
+
+func makeAvatar(context appengine.Context, path string) (string, error) {
+    key, _ := blobstore.BlobKeyForFile(context,path)
+    opts := image.ServingURLOptions{Secure:false, Size:50, Crop:false}
+    url, _ := image.ServingURL(context, key, &opts)
+    context.Infof("url : ", url.String())
+    return url.String(), nil
 }
